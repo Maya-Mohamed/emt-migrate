@@ -3,3 +3,4 @@ snapshot.json
 migrate.sh
 migrate-*.sh
 vendor/
+*.swp
