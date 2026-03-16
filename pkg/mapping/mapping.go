@@ -1,7 +1,8 @@
-// pkg/mapping/mapping.go
 package mapping
 
-import "github.com/Maya-Mohamed/emt-migrate/pkg/snapshot"
+import (
+	"fmt"
+)
 
 type PackageMapping struct {
 	EMTName    string
@@ -10,14 +11,6 @@ type PackageMapping struct {
 	CentOSName string
 	SUSEName   string
 	Note       string
-}
-
-type MappedPackage struct {
-	Original   snapshot.RPMPackage
-	TargetName string
-	Skip       bool
-	Note       string
-	Changed    bool
 }
 
 var knownMappings = []PackageMapping{
@@ -39,13 +32,21 @@ var knownMappings = []PackageMapping{
 	{EMTName: "qemu-img", RHELName: "qemu-img", FedoraName: "qemu-img", CentOSName: "qemu-img", SUSEName: "qemu-tools", Note: "SUSE packages qemu tools differently"},
 }
 
-func findMapping(emtName string) (PackageMapping, bool) {
+// ADD THIS: map for O(1) lookups
+var mappingIndex map[string]PackageMapping
+
+// ADD THIS: init function to build the map
+func init() {
+	mappingIndex = make(map[string]PackageMapping, len(knownMappings))
 	for _, m := range knownMappings {
-		if m.EMTName == emtName {
-			return m, true
-		}
+		mappingIndex[m.EMTName] = m
 	}
-	return PackageMapping{}, false
+}
+
+// REPLACE THIS FUNCTION - use map instead of linear scan
+func findMapping(emtName string) (PackageMapping, bool) {
+	m, exists := mappingIndex[emtName]
+	return m, exists
 }
 
 func MapPackage(emtName string, targetDistro string) (string, bool, string) {
@@ -77,17 +78,13 @@ func MapPackage(emtName string, targetDistro string) (string, bool, string) {
 	return targetName, false, m.Note
 }
 
-func MapAll(packages []snapshot.RPMPackage, targetDistro string) []MappedPackage {
-	var mapped []MappedPackage
-	for _, pkg := range packages {
-		targetName, skip, note := MapPackage(pkg.Name, targetDistro)
-		mapped = append(mapped, MappedPackage{
-			Original:   pkg,
-			TargetName: targetName,
-			Skip:       skip,
-			Note:       note,
-			Changed:    targetName != pkg.Name && !skip,
-		})
+var SupportedDistros = []string{"rhel", "fedora", "centos", "suse"}
+
+func ValidateTarget(distro string) error {
+	for _, d := range SupportedDistros {
+		if d == distro {
+			return nil
+		}
 	}
-	return mapped
+	return fmt.Errorf("unsupported target distro %q, supported: %v", distro, SupportedDistros)
 }

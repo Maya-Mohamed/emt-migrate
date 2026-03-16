@@ -19,8 +19,6 @@ Package mappings are informed by EMT's own spec files:
 - [`SPECS/docker-cli/docker-cli.spec`](https://github.com/open-edge-platform/edge-microvisor-toolkit/blob/3.0/SPECS/docker-cli/docker-cli.spec) — `Provides: moby-cli`
 - [`SPECS/edge-release/90-default.preset`](https://github.com/open-edge-platform/edge-microvisor-toolkit/blob/3.0/SPECS/edge-release/90-default.preset) — default systemd service presets
 
-./emt-migrate generate -s snapshot.json -t suse -o migrate-suse.sh
-
 ## Usage  
   
 ```bash  
