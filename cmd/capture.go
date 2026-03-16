@@ -1,4 +1,3 @@
-// cmd/capture.go
 package cmd
 
 import (
@@ -10,37 +9,46 @@ import (
 	"github.com/Maya-Mohamed/emt-migrate/pkg/docker"
 	"github.com/Maya-Mohamed/emt-migrate/pkg/rpm"
 	"github.com/Maya-Mohamed/emt-migrate/pkg/snapshot"
+	"github.com/Maya-Mohamed/emt-migrate/pkg/systemd"
 	"github.com/spf13/cobra"
 )
 
-var outputFile string
+var captureOutput string
 
 var captureCmd = &cobra.Command{
 	Use:   "capture",
-	Short: "Capture current system state (RPM packages, Docker images)",
+	Short: "Capture current system state (RPM packages, Docker images, systemd services)",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		hostname, _ := os.Hostname()
+		snap := snapshot.Snapshot{
+			Timestamp: time.Now(),
+			Hostname:  hostname,
+		}
 
 		fmt.Println("Querying installed RPM packages...")
-		packages, err := rpm.GetInstalledPackages()
+		pkgs, err := rpm.GetInstalledPackages()
 		if err != nil {
 			return fmt.Errorf("rpm capture failed: %w", err)
 		}
-		fmt.Printf("Found %d packages\n", len(packages))
+		snap.Packages = pkgs
+		fmt.Printf("Found %d packages\n", len(pkgs))
 
 		fmt.Println("Querying Docker images...")
-		images, err := docker.GetImages()
+		imgs, err := docker.GetImages()
 		if err != nil {
-			fmt.Printf("Warning: Docker query failed: %v (continuing without Docker images)\n", err)
+			fmt.Printf("Warning: Docker query failed: %s (continuing without Docker images)\n", err)
 		} else {
-			fmt.Printf("Found %d images\n", len(images))
+			snap.DockerImages = imgs
+			fmt.Printf("Found %d Docker images\n", len(imgs))
 		}
 
-		snap := snapshot.Snapshot{
-			Timestamp:    time.Now(),
-			Hostname:     hostname,
-			Packages:     packages,
-			DockerImages: images,
+		fmt.Println("Querying systemd services...")
+		svcs, err := systemd.GetEnabledServices()
+		if err != nil {
+			fmt.Printf("Warning: systemd query failed: %s (continuing without services)\n", err)
+		} else {
+			snap.Services = svcs
+			fmt.Printf("Found %d enabled services\n", len(svcs))
 		}
 
 		data, err := json.MarshalIndent(snap, "", "  ")
@@ -48,16 +56,16 @@ var captureCmd = &cobra.Command{
 			return fmt.Errorf("failed to marshal snapshot: %w", err)
 		}
 
-		if err := os.WriteFile(outputFile, data, 0644); err != nil {
+		if err := os.WriteFile(captureOutput, data, 0644); err != nil {
 			return fmt.Errorf("failed to write snapshot: %w", err)
 		}
 
-		fmt.Printf("Snapshot saved to %s\n", outputFile)
+		fmt.Printf("Snapshot saved to %s\n", captureOutput)
 		return nil
 	},
 }
 
 func init() {
-	captureCmd.Flags().StringVarP(&outputFile, "output", "o", "snapshot.json", "Output file path")
+	captureCmd.Flags().StringVarP(&captureOutput, "output", "o", "snapshot.json", "Output file path")
 	rootCmd.AddCommand(captureCmd)
 }

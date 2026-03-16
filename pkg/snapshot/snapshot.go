@@ -4,10 +4,11 @@ package snapshot
 import "time"
 
 type Snapshot struct {
-	Timestamp    time.Time     `json:"timestamp"`
-	Hostname     string        `json:"hostname"`
-	Packages     []RPMPackage  `json:"packages"`
-	DockerImages []DockerImage `json:"docker_images"`
+	Timestamp    time.Time        `json:"timestamp"`
+	Hostname     string           `json:"hostname"`
+	Packages     []RPMPackage     `json:"packages"`
+	DockerImages []DockerImage    `json:"docker_images"`
+	Services     []SystemdService `json:"services"`
 }
 
 type RPMPackage struct {
@@ -25,4 +26,9 @@ type DockerImage struct {
 	Tag        string `json:"tag"`
 	ID         string `json:"id"`
 	Size       string `json:"size"`
+}
+
+type SystemdService struct {
+	Name  string `json:"name"`
+	State string `json:"state"`
 }
