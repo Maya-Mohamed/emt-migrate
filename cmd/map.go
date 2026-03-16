@@ -17,6 +17,9 @@ var mapCmd = &cobra.Command{
 	Use:   "map",
 	Short: "Show how EMT packages map to a target distribution",
 	RunE: func(cmd *cobra.Command, args []string) error {
+		if err := mapping.ValidateTarget(mapTarget); err != nil {
+			return err
+		}
 		data, err := os.ReadFile(mapSnapshot)
 		if err != nil {
 			return fmt.Errorf("failed to read snapshot: %w", err)

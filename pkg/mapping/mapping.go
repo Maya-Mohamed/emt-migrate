@@ -32,10 +32,8 @@ var knownMappings = []PackageMapping{
 	{EMTName: "qemu-img", RHELName: "qemu-img", FedoraName: "qemu-img", CentOSName: "qemu-img", SUSEName: "qemu-tools", Note: "SUSE packages qemu tools differently"},
 }
 
-// ADD THIS: map for O(1) lookups
 var mappingIndex map[string]PackageMapping
 
-// ADD THIS: init function to build the map
 func init() {
 	mappingIndex = make(map[string]PackageMapping, len(knownMappings))
 	for _, m := range knownMappings {
@@ -43,7 +41,6 @@ func init() {
 	}
 }
 
-// REPLACE THIS FUNCTION - use map instead of linear scan
 func findMapping(emtName string) (PackageMapping, bool) {
 	m, exists := mappingIndex[emtName]
 	return m, exists
