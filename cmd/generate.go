@@ -98,6 +98,9 @@ var generateCmd = &cobra.Command{
 	Use:   "generate",
 	Short: "Generate a migration script for a target distribution",
 	RunE: func(cmd *cobra.Command, args []string) error {
+		if err := mapping.ValidateTarget(genTarget); err != nil {
+			return err
+		}
 		data, err := os.ReadFile(genSnapshot)
 		if err != nil {
 			return fmt.Errorf("failed to read snapshot: %w", err)
